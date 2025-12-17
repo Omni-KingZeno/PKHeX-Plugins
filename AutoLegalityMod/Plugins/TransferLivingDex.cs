@@ -23,6 +23,12 @@ public class TransferLivingDex : AutoModPlugin
 
     private void GenTLivingDex(object? sender, EventArgs e)
     {
+        if (_settings.TransferVersion == GameVersion.Any)
+        {
+            WinFormsUtil.Alert("Please set a valid Transfer Version in the settings.");
+            return;
+        }
+
         var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Transfer Dex for {_settings.TransferVersion}?");
         if (prompt != DialogResult.Yes)
         {
