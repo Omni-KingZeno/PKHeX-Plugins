@@ -69,7 +69,7 @@ public static class ModLogic
         var context = sav.Context;
         var generation = sav.Generation;
         TrackingCount = 0;
-        Parallel.For(1, personal.MaxSpeciesID+1, id => //parallel For's end is exclusive
+        Parallel.For(1, personal.MaxSpeciesID + 1, id => //parallel For's end is exclusive
         {
             var s = (ushort)id;
             if (!personal.IsSpeciesInGame(s))
@@ -99,8 +99,7 @@ public static class ModLogic
                         formarg++;
                     }
                 }
-
-                if (!personal.IsPresentInGame(s, form) || FormInfo.IsLordForm(s, form, context) || FormInfo.IsBattleOnlyForm(s, form, generation) || FormInfo.IsFusedForm(s, form, generation) || (FormInfo.IsTotemForm(s, form) && context is not EntityContext.Gen7))
+                if (!personal.IsPresentInGame(s, form) || NoBoxForm(s, f, sav))
                     continue;
                 var pk = AddPKM(sav, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
                 if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form && x.Species != 869))
@@ -116,6 +115,7 @@ public static class ModLogic
         });
         return pklist.OrderBy(z => z.Species);
     }
+
     public static int TrackingCount { get; set; }
     /// <summary>
     /// Generates a living dex for transfer between games, considering both source and destination game restrictions.
@@ -123,6 +123,7 @@ public static class ModLogic
     /// <param name="src">The source trainer information.</param>
     /// <returns>An enumerable of generated <see cref="PKM"/> objects valid for transfer.</returns>
     public static IEnumerable<PKM> GenerateTransferLivingDex(this ITrainerInfo src) => src.GenerateTransferLivingDex(Config);
+
     /// <summary>
     /// Generates a living dex for transfer between games, considering both source and destination game restrictions.
     /// </summary>
@@ -193,6 +194,27 @@ public static class ModLogic
         }
 
         return f;
+    }
+
+    private static bool NoBoxForm(ushort species, byte form, ITrainerInfo sav) =>
+        FormInfo.IsLordForm(species, form, sav.Context)
+        || FormInfo.IsBattleOnlyForm(species, form, sav.Generation)
+        || FormInfo.IsFusedForm(species, form, sav.Generation)
+        || (FormInfo.IsTotemForm(species, form) && sav.Context is not EntityContext.Gen7);
+
+    private static bool NoEggForm(ushort species, byte form, EntityContext context)
+    {
+        var s = (Species)species;
+
+        return s switch
+        {
+            Sinistea or Polteageist or Sinistcha or Poltchageist or Pikachu when form != 0 => true,
+            Scatterbug or Spewpa or Vivillon =>
+                (form != 10 && context is not EntityContext.Gen9) ||
+                (form != 18 && context is EntityContext.Gen9),
+            Milcery or Alcremie when form != 0 => true,
+            _ => false
+        };
     }
 
     private static PKM? AddPKM(ITrainerInfo sav, ITrainerInfo tr, ushort species, byte form, bool shiny, bool alpha)
@@ -535,25 +557,59 @@ public static class ModLogic
 
         return result;
     }
+
     /// <summary>
     /// Generates a living egg dex (one egg per species) for the given trainer and personal table.
     /// </summary>
     /// <param name="sav">Trainer information to use for generating eggs.</param>
     /// <param name="personal">Personal table containing species data.</param>
-    /// <returns>An enumerable of generated <see cref="PKM"/> egg objects, one per species.</returns>
-    public static IEnumerable<PKM> GenerateLivingEggDex(this ITrainerInfo sav, IPersonalTable personal)
+    /// <returns>An enumerable of generated <see cref="PKM"/> egg objects.</returns>
+    public static IEnumerable<PKM> GenerateLivingEggDex(this ITrainerInfo src, IPersonalTable personal) => src.GenerateLivingEggDex(personal, Config);
+
+    /// <summary>
+    /// Generates a living egg dex (one egg per species) for the given trainer and personal table.
+    /// </summary>
+    /// <param name="sav">Trainer information to use for generating eggs.</param>
+    /// <param name="personal">Personal table containing species data.</param>
+    /// <param name="cfg">Configuration specifying living dex options.</param>
+    /// <returns>An enumerable of generated <see cref="PKM"/> egg objects.</returns>
+    public static IEnumerable<PKM> GenerateLivingEggDex(this ITrainerInfo sav, IPersonalTable personal, LivingDexConfig cfg)
     {
         var pklist = new ConcurrentBag<PKM>();
         var tr = APILegality.UseTrainerData ? TrainerSettings.GetSavedTrainerData(sav.Version) : sav;
         Parallel.For(1, personal.MaxSpeciesID + 1, id => //parallel For's end is exclusive
         {
-            var s = (Species)id;
-            if (!personal.IsSpeciesInGame((ushort)s))
+            var s = (ushort)id;
+            if (!personal.IsSpeciesInGame(s))
                 return;
-            var pk = tr.GenerateEgg(new RegenTemplate(new ShowdownSet(s.ToString())), out var result);
-            if (result != LegalizationResult.Regenerated)
-                return;
-            pklist.Add(pk);
+
+            var numForms = personal[s].FormCount;
+            var str = GameInfo.Strings;
+
+            if (numForms == 1 && cfg.IncludeForms)
+                numForms = (byte)FormConverter.GetFormList(s, str.types, str.forms, GameInfo.GenderSymbolUnicode, sav.Context).Length;
+
+            for (byte f = 0; f < numForms; f++)
+            {
+                if (!personal.IsPresentInGame(s, f) || NoBoxForm(s, f, sav) || NoEggForm(s, f, sav.Context))
+                    continue;
+
+                var template = new RegenTemplate(new ShowdownSet($"{str.Species[s]}"))
+                {
+                    Form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, sav)
+                };
+
+                if ((Species)s is Salazzle or Vespiquen)
+                    template.Gender = (byte?)Gender.Female;
+
+                var pk = tr.GenerateEgg(template, out var result);
+                if (result != LegalizationResult.Regenerated)
+                    continue;
+
+                pklist.Add(pk);
+                if (!cfg.IncludeForms)
+                    break;
+            }
         });
         return pklist.OrderBy(z => z.Species);
     }
