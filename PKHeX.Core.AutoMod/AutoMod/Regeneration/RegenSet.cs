@@ -139,7 +139,7 @@ public sealed class RegenSet
         if (keySpan.IsEmpty || valueSpan.IsEmpty)
             return false;
 
-        var key = ConvertKey(keySpan.ToString());
+        var key = ConvertKey(keySpan.ToString().Replace(" ", string.Empty));
         var value = valueSpan.ToString();
 
         if (key == "RibbonMark")
