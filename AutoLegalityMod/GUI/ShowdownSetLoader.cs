@@ -240,6 +240,7 @@ public static class ShowdownSetLoader
         APILegality.ForceLevel100for50 = settings.ForceLevel100for50;
         APILegality.ExportFormat = settings.ExportFormat;
         APILegality.RandTypes = settings.RandomTypes;
+        APILegality.Version = SaveFileEditor.SAV.Version;
         Legalizer.EnableEasterEggs = settings.EnableEasterEggs;
         SmogonGenner.PromptForImport = settings.PromptForSmogonImport;
         ModLogic.Config = new LivingDexConfig

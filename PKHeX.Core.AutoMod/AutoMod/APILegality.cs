@@ -32,6 +32,7 @@ public static class APILegality
     public static bool ForceLevel100for50 { get; set; } = true;
     public static BattleTemplateDisplayStyle ExportFormat { get; set; } = BattleTemplateDisplayStyle.Showdown;
     public static MoveType[] RandTypes { get; set; } = [];
+    public static GameVersion Version { get; set; }
     public static int Timeout { get; set; } = 15;
 
     public static bool AllowHOME => ParseSettings.Settings.HOMETransfer.HOMETransferTrackerNotPresent != Severity.Invalid;

@@ -180,7 +180,7 @@ public sealed class RegenSet
             "suggest" => "$suggest",
             "yes" => key == "HyperTrainFlags" ? "1" : "true",
             "no" => key == "HyperTrainFlags" ? "0" : "false",
-            _ when key is "Scale" or "WeightScalar" or "HeightScalar" => ConvertScalarValue(key, value),        
+            _ when key is "Scale" or "WeightScalar" or "HeightScalar" => ConvertScalarValue(key, value),
             _ => value
         };
     }
@@ -188,22 +188,22 @@ public sealed class RegenSet
     private static string ConvertScalarValue(string key, string value)
     {
         var rnd = new Random();
-
+        var sv = APILegality.Version is GameVersion.SV;
         return (key, value) switch
         {
             ("Scale", "xxxs") => "0",
-            ("Scale", "xxs") => $"{rnd.Next(1, 31)}",
-            ("Scale", "xs") => $"{rnd.Next(31, 61)}",
-            ("Scale", "s") => $"{rnd.Next(61, 101)}",
-            ("Scale", "av") => $"{rnd.Next(101, 161)}",
-            ("Scale", "l") => $"{rnd.Next(161, 196)}",
-            ("Scale", "xl") => $"{rnd.Next(196, 242)}",
-            ("Scale", "xxl") => $"{rnd.Next(242, 255)}",
+            ("Scale", "xxs") when sv => $"{rnd.Next(1, 26)}",
+            ("Scale", "xs") when sv => $"{rnd.Next(26, 60)}",
+            ("Scale", "s") when sv => $"{rnd.Next(60, 100)}",
+            ("Scale", "av" or "average" or "m" or "medium") when sv => $"{rnd.Next(100, 156)}",
+            ("Scale", "l" or "large") when sv => $"{rnd.Next(156, 196)}",
+            ("Scale", "xl") when sv => $"{rnd.Next(196, 231)}",
+            ("Scale", "xxl") when sv => $"{rnd.Next(231, 255)}",
             ("Scale", "xxxl") => "255",
             (_, "xs") => $"{rnd.Next(0, 16)}",
-            (_, "s") => $"{rnd.Next(16, 48)}",
-            (_, "av") => $"{rnd.Next(48, 208)}",
-            (_, "l") => $"{rnd.Next(208, 240)}",
+            (_, "s" or "small") => $"{rnd.Next(16, 48)}",
+            (_, "av" or "average" or "m" or "medium") => $"{rnd.Next(48, 208)}",
+            (_, "l" or "large") => $"{rnd.Next(208, 240)}",
             (_, "xl") => $"{rnd.Next(240, 256)}",
             _ => value
         };
