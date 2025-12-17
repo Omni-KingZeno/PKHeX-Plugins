@@ -99,7 +99,7 @@ public static class ModLogic
                         formarg++;
                     }
                 }
-                if (!personal.IsPresentInGame(s, form) || NoBoxForm(s, f, sav))
+                if (!personal.IsPresentInGame(s, form) || HasNoBoxForm(s, f, sav))
                     continue;
                 var pk = AddPKM(sav, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
                 if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form && x.Species != 869))
@@ -156,7 +156,7 @@ public static class ModLogic
 
             for (byte f = 0; f < num_forms; f++)
             {
-                if (!destPersonal.IsPresentInGame(s, f) || FormInfo.IsLordForm(s, f, context) || FormInfo.IsBattleOnlyForm(s, f, generation) || FormInfo.IsFusedForm(s, f, generation) || (FormInfo.IsTotemForm(s, f) && context is not EntityContext.Gen7))
+                if (!destPersonal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, src))
                     continue;
                 var form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, src);
                 var pk = AddPKM(src, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
@@ -196,24 +196,16 @@ public static class ModLogic
         return f;
     }
 
-    private static bool NoBoxForm(ushort species, byte form, ITrainerInfo sav) => FormInfo.IsLordForm(species, form, sav.Context)
+    private static bool HasNoBoxForm(ushort species, byte form, ITrainerInfo sav) => FormInfo.IsLordForm(species, form, sav.Context)
         || FormInfo.IsBattleOnlyForm(species, form, sav.Generation)
         || FormInfo.IsFusedForm(species, form, sav.Generation)
         || (FormInfo.IsTotemForm(species, form) && sav.Context is not EntityContext.Gen7);
 
-    private static bool NoEggForm(ushort species, byte form)
-    {
-        var s = (Species)species;
-
-        return s switch
-        {
-            Sinistea or Polteageist or Sinistcha or Poltchageist or // Can't Breed Authentic Form
+    private static bool HasNoEggForm(Species s, byte form) => 
+            (s is Sinistea or Polteageist or Sinistcha or Poltchageist or // Can't Breed Authentic Form
             Pikachu or // Can't Breed Hat Forms
-            Milcery or Alcremie // can't Breed Alcreamie Forms
-            when form != 0 => true,
-            _ => false
-        };
-    }
+            Milcery or Alcremie) // Can't Breed Alcreamie Forms
+            && form != 0;
 
     private static PKM? AddPKM(ITrainerInfo sav, ITrainerInfo tr, ushort species, byte form, bool shiny, bool alpha)
     {
@@ -575,6 +567,7 @@ public static class ModLogic
     {
         var pklist = new ConcurrentBag<PKM>();
         var tr = APILegality.UseTrainerData ? TrainerSettings.GetSavedTrainerData(sav.Version) : sav;
+        var str = GameInfo.Strings;
         Parallel.For(1, personal.MaxSpeciesID + 1, id => //parallel For's end is exclusive
         {
             var s = (ushort)id;
@@ -582,14 +575,12 @@ public static class ModLogic
                 return;
 
             var numForms = personal[s].FormCount;
-            var str = GameInfo.Strings;
-
             if (numForms == 1 && cfg.IncludeForms)
                 numForms = (byte)FormConverter.GetFormList(s, str.types, str.forms, GameInfo.GenderSymbolUnicode, sav.Context).Length;
 
             for (byte f = 0; f < numForms; f++)
             {
-                if (!personal.IsPresentInGame(s, f) || NoBoxForm(s, f, sav) || NoEggForm(s, f))
+                if (!personal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, sav) || HasNoEggForm((Species)s, f))
                     continue;
 
                 var template = new RegenTemplate(new ShowdownSet($"{str.Species[s]}"))
