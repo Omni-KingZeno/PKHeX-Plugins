@@ -11,9 +11,9 @@ using AutoModPlugins.GUI;
 
 namespace AutoModPlugins;
 
-public class LivingDex : AutoModPlugin
+public class LivingEggDex : AutoModPlugin
 {
-    public override string Name => "Generate Living Dex";
+    public override string Name => "Generate Living Egg Dex";
     public override int Priority => 1;
 
     protected override void AddPluginControl(ToolStripDropDownItem modmenu)
@@ -21,38 +21,58 @@ public class LivingDex : AutoModPlugin
         var ctrl = new ToolStripMenuItem(Name)
         {
             Image = Resources.livingdex,
-            ShortcutKeys = Keys.Alt | Keys.D,
+            ShortcutKeys = Keys.Alt | Keys.E,
         };
-        ctrl.Click += GenLivingDex;
-        ctrl.Name = "Menu_LivingDex";
+        ctrl.Click += GenLivingEggDex;
+        ctrl.Name = "Menu_LivingEggDex";
         modmenu.DropDownItems.Add(ctrl);
     }
 
-    private async void GenLivingDex(object? sender, EventArgs e)
+    private async void GenLivingEggDex(object? sender, EventArgs e)
     {
-        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Living Dex?");
+        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Living Egg Dex?");
         if (prompt != DialogResult.Yes)
             return;
+
         var sav = SaveFileEditor.SAV;
-        var t = new ALMStatusBar("Living Dex", sav.MaxSpeciesID)
+        var t = new ALMStatusBar("Living Egg Dex", sav.MaxSpeciesID)
         {
             Count = ModLogic.TrackingCount
         };
         t.Show();
 
-        // After showing the form, start a polling loop
-        _ = Task.Run(() => PollingLoop(t));
+        // Wait for the ALM status bar handle to be created
+        await Task.Run(() =>
+        {
+            while (!t.IsHandleCreated)
+                System.Threading.Thread.Sleep(10);
+        });
 
-        var dex = await Task.Run(() => egg ? sav.GenerateLivingEggDex(sav.Personal) : sav.GenerateLivingDex(sav.Personal));
+        // After showing the status bar, then start the polling loop
+        var pollingTask = Task.Run(() => PollingLoop(t));
+
+        var dex = await Task.Run(() => sav.GenerateLivingEggDex(sav.Personal));
         List<PKM> extra = [];
-        t.Close();
+
+        // Now we can safely close the status bar
+        if (t.InvokeRequired)
+        {
+            t.Invoke(new Action(() => t.Close()));
+        }
+        else
+        {
+            t.Close();
+        }
+        // waiting for the task to finish
+        await pollingTask;
+
         int generated = IngestToBoxes(sav, dex, extra);
-        System.Diagnostics.Debug.WriteLine($"Generated Living Dex with {generated} entries.");
+        System.Diagnostics.Debug.WriteLine($"Generated Living Egg Dex with {generated} entries.");
         SaveFileEditor.ReloadSlots();
         if (extra.Count == 0)
             return;
 
-        prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "This Living Dex does not fit in all boxes. Save the extra to a folder?");
+        prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "This Living Egg Dex does not fit in all boxes. Save the extra to a folder?");
         if (prompt != DialogResult.Yes)
             return;
 
@@ -67,15 +87,31 @@ public class LivingDex : AutoModPlugin
     private static void PollingLoop(ALMStatusBar t)
     {
         int lastCount = -1;
-        while (!t.IsDisposed)
+        while (!t.IsDisposed && t.IsHandleCreated)
         {
             if (ModLogic.TrackingCount != lastCount)
             {
                 lastCount = ModLogic.TrackingCount;
-                t.Count = lastCount;
+                if (t.InvokeRequired)
+                {
+                    try
+                    {
+                        t.Invoke(new Action(() => t.Count = lastCount));
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    t.Count = lastCount;
+                }
             }
+            System.Threading.Thread.Sleep(50);
         }
     }
+
     private static int IngestToBoxes(SaveFile sav, IEnumerable<PKM> list, IList<PKM> extra, int slot = 0)
     {
         int generated = 0;
