@@ -167,7 +167,7 @@ public static class ModLogic
 
         ConcurrentBag<PKM> pklist = [];
         var tr = APILegality.UseTrainerData ? TrainerSettings.GetSavedTrainerData(src.Version, lang: (LanguageID)src.Language) : src;
-
+        TrackingCount = 0;
         Parallel.For(1, srcPersonal.MaxSpeciesID + 1, id => //parallel For's end is exclusive
         {
             var s = (ushort)id;
@@ -218,6 +218,7 @@ public static class ModLogic
                         break;
                 }
             }
+            TrackingCount++;
         });
         return pklist.OrderBy(z => z.Species);
     }

@@ -55,7 +55,10 @@
             ClientSize = new System.Drawing.Size(325, 84);
             Controls.Add(L_status);
             Controls.Add(pb_status);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             Name = "ALMStatusBar";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "form1";
             ResumeLayout(false);
             PerformLayout();
