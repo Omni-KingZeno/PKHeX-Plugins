@@ -88,6 +88,9 @@ public sealed class RegenSetting
         if (Alpha)
             result.Add("Alpha: Yes");
 
+        if (Egg)
+            result.Add("Egg: Yes");
+
         return string.Join(Environment.NewLine, result);
     }
 }
