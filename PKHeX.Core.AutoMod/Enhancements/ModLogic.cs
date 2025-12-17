@@ -196,23 +196,21 @@ public static class ModLogic
         return f;
     }
 
-    private static bool NoBoxForm(ushort species, byte form, ITrainerInfo sav) =>
-        FormInfo.IsLordForm(species, form, sav.Context)
+    private static bool NoBoxForm(ushort species, byte form, ITrainerInfo sav) => FormInfo.IsLordForm(species, form, sav.Context)
         || FormInfo.IsBattleOnlyForm(species, form, sav.Generation)
         || FormInfo.IsFusedForm(species, form, sav.Generation)
         || (FormInfo.IsTotemForm(species, form) && sav.Context is not EntityContext.Gen7);
 
-    private static bool NoEggForm(ushort species, byte form, EntityContext context)
+    private static bool NoEggForm(ushort species, byte form)
     {
         var s = (Species)species;
 
         return s switch
         {
-            Sinistea or Polteageist or Sinistcha or Poltchageist or Pikachu when form != 0 => true,
-            Scatterbug or Spewpa or Vivillon =>
-                (form != 10 && context is not EntityContext.Gen9) ||
-                (form != 18 && context is EntityContext.Gen9),
-            Milcery or Alcremie when form != 0 => true,
+            Sinistea or Polteageist or Sinistcha or Poltchageist or // Can't Breed Authentic Form
+            Pikachu or // Can't Breed Hat Forms
+            Milcery or Alcremie // can't Breed Alcreamie Forms
+            when form != 0 => true,
             _ => false
         };
     }
@@ -591,7 +589,7 @@ public static class ModLogic
 
             for (byte f = 0; f < numForms; f++)
             {
-                if (!personal.IsPresentInGame(s, f) || NoBoxForm(s, f, sav) || NoEggForm(s, f, sav.Context))
+                if (!personal.IsPresentInGame(s, f) || NoBoxForm(s, f, sav) || NoEggForm(s, f))
                     continue;
 
                 var template = new RegenTemplate(new ShowdownSet($"{str.Species[s]}"))

@@ -1422,8 +1422,8 @@ public static class APILegality
 
             // Create the PKM from the template.
             var raw = enc.GetPokemonFromEncounter(dest, criteria, set);
-            if (raw.Form != template.Form)
-                continue;
+            if (raw.Species is (ushort)Species.Scatterbug)
+                raw.Form = set.Form;
             raw.IsEgg = true;
             raw.SetEggMoves(set, enc);
             raw.CurrentFriendship = (byte)EggStateLegality.GetMinimumEggHatchCycles(raw);
