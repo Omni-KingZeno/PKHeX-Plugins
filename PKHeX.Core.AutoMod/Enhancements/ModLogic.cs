@@ -597,7 +597,7 @@ public static class ModLogic
                     Form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, sav)
                 };
 
-                if ((Species)s is Salazzle or Vespiquen)
+                if ((Species)s is Salazzle or Vespiquen or Kirlia or Gardevoir || ((Species)s is Oinkologne && f == 1))
                     template.Gender = (byte?)Gender.Female;
 
                 var pk = tr.GenerateEgg(template, out var result);
