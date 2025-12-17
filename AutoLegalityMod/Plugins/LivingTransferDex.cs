@@ -1,19 +1,20 @@
-﻿using System;
-using System.IO;
-using System.Windows.Forms;
+﻿using AutoModPlugins.GUI;
 using AutoModPlugins.Properties;
 using PKHeX.Core;
 using PKHeX.Core.AutoMod;
+using System;
 using System.Collections.Generic;
-using Microsoft.VisualBasic.Devices;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using AutoModPlugins.GUI;
+using System.Windows.Forms;
 
 namespace AutoModPlugins;
 
-public class LivingDex : AutoModPlugin
+public class TransferLivingDex : AutoModPlugin
 {
-    public override string Name => "Generate Living Dex";
+    public override string Name => "Transfer Living Dex";
+
     public override int Priority => 1;
 
     protected override void AddPluginControl(ToolStripDropDownItem modmenu)
@@ -21,20 +22,29 @@ public class LivingDex : AutoModPlugin
         var ctrl = new ToolStripMenuItem(Name)
         {
             Image = Resources.livingdex,
-            ShortcutKeys = Keys.Alt | Keys.D,
+            ShortcutKeys = Keys.Alt | Keys.T,
         };
-        ctrl.Click += GenLivingDex;
-        ctrl.Name = "Menu_LivingDex";
+        ctrl.Click += GenTLivingDex;
+        ctrl.Name = "Menu_TransferDex";
         modmenu.DropDownItems.Add(ctrl);
     }
 
-    private async void GenLivingDex(object? sender, EventArgs e)
+    private async void GenTLivingDex(object? sender, EventArgs e)
     {
-        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Living Dex?");
-        if (prompt != DialogResult.Yes)
+        if (_settings.TransferVersion == GameVersion.Any)
+        {
+            WinFormsUtil.Alert("Please set a valid Transfer Version in the settings.");
             return;
+        }
+
+        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Transfer Dex for {_settings.TransferVersion}?");
+        if (prompt != DialogResult.Yes)
+        {
+            return;
+        }
+
         var sav = SaveFileEditor.SAV;
-        var t = new ALMStatusBar("Living Dex", sav.MaxSpeciesID)
+        var t = new ALMStatusBar("Living Transfer Dex", sav.MaxSpeciesID)
         {
             Count = ModLogic.TrackingCount
         };
@@ -50,7 +60,7 @@ public class LivingDex : AutoModPlugin
         // After showing the status bar, then start the polling loop
         var pollingTask = Task.Run(() => PollingLoop(t));
 
-        var dex = await Task.Run(() => sav.GenerateLivingDex(sav.Personal));
+        var pkms = await Task.Run(() => sav.GenerateTransferLivingDex().ToArray());
         List<PKM> extra = [];
 
         // Now we can safely close the status bar
@@ -65,13 +75,13 @@ public class LivingDex : AutoModPlugin
         // waiting for the task to finish
         await pollingTask;
 
-        int generated = IngestToBoxes(sav, dex, extra);
-        System.Diagnostics.Debug.WriteLine($"Generated Living Dex with {generated} entries.");
+        int generated = IngestToBoxes(sav, pkms, extra);
+        System.Diagnostics.Debug.WriteLine($"Generated Living Transfer Dex with {pkms.Length} entries.");
         SaveFileEditor.ReloadSlots();
         if (extra.Count == 0)
             return;
 
-        prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "This Living Dex does not fit in all boxes. Save the extra to a folder?");
+        prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "This Living Transfer Dex does not fit in all boxes. Save the extra to a folder?");
         if (prompt != DialogResult.Yes)
             return;
 
@@ -111,7 +121,7 @@ public class LivingDex : AutoModPlugin
         }
     }
 
-    private static int IngestToBoxes(SaveFile sav, IEnumerable<PKM> list, IList<PKM> extra, int slot = 0)
+    private static int IngestToBoxes(SaveFile sav, Span<PKM> list, IList<PKM> extra, int slot = 0)
     {
         int generated = 0;
         foreach (var pk in list)
