@@ -160,7 +160,7 @@ public static class ModLogic
                     continue;
                 var form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, src);
                 var pk = AddPKM(src, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
-                if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form))
+                if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form) || !destPersonal.IsPresentInGame(pk.Species, pk.Form))
                     continue;
 
                 pklist.Add(pk);
