@@ -1,6 +1,8 @@
 # About  
 This project uses `PKHeX.Core` and PKHeX's `IPlugin` interface to add enhancements to the PKHeX program, namely **Auto**mated **Mod**ifications to simplify creation of legal Pokémon.
-This Fork is owned by [@santacrab2](https://github.com/santacrab2)
+
+This Fork is owned by [@Omni-KingZeno](https://github.com/Omni-KingZeno)<br>
+The Original Fork is owned by [@santacrab2](https://github.com/santacrab2) (Discord: santacrab)<br>
 The original project is owned by [@architdate](https://github.com/architdate) (Discord: thecommondude) and [@kwsch](https://github.com/kwsch) (Discord: kwsch).
 
 ## Building  
@@ -9,7 +11,7 @@ This project requires an IDE that supports compiling .NET based code, such as Vi
 **Regular Builds**  
 Regular builds will usually succeed unless there are changes that are incompatible with the NuGet [PKHeX.Core](https://www.nuget.org/packages/PKHeX.Core) package dependency specified in the `.csproj` files of the projects. If building fails, use the bleeding edge method instead.
 
-- Clone the PKHeX-Plugins repository using: `$ git clone https://github.com/santacrab2/PKHeX-Plugins.git`.
+- Clone the PKHeX-Plugins repository using: `$ git clone https://github.com/Omni-KingZeno/PKHeX-Plugins.git`.
 - Right-click on the solution and click `Rebuild All`.
 - These DLLs should be placed into a `plugins` directory where the PKHeX executable is.
    - The compiled DLL `AutoModPlugins.dll` for AutoLegality will be in the `AutoLegalityMod\bin\Release\net9.0-windows` directory.
@@ -18,7 +20,7 @@ Regular builds will usually succeed unless there are changes that are incompatib
 Use this build method only if the regular builds fail. The Azure Pipelines CI will always use the bleeding edge build method. More details regarding this can be seen in the [azure-pipelines.yml](https://github.com/santacrab2/PKHeX-Plugins/blob/master/azure-pipelines.yml) file.
 
 - Clone the PKHeX repository using: `$ git clone https://github.com/kwsch/PKHeX.git`.
-- Clone the PKHeX-Plugins repository using: `$ git clone https://github.com/santacrab2/PKHeX-Plugins.git`.
+- Clone the PKHeX-Plugins repository using: `$ git clone https://github.com/Omni-KingZeno/PKHeX-Plugins.git`.
 - Open the PKHeX solution, change your environment to `Release`, right-click on the `PKHeX.Core` project, and click `Rebuild` to build the project.
 - Open the PKHeX-Plugins solution and right-click to `Restore NuGet Packages`.
 - Next, replace the most recent NuGet packages with the newly-built `PKHeX.Core.dll` files.
@@ -34,12 +36,6 @@ To use the plugins:
 - Start PKHeX.exe.
 - The plugins should be available for use in `Tools > Auto Legality Mod` drop-down menu.
 
-## Support Server
-Please refer to the [Wiki](https://github.com/santacrab2/PKHeX-Plugins/wiki) first for usage information and help first, as most queries are answered there. If you have looked and need additional help, you can join the dedicated Discord server for this mod!
-
-[<img src="https://discord.com/api/guilds/872587205787394119/widget.png?style=banner2">](https://discord.com/invite/vxT5sSHvvn) <br>
-**Website with Links to downloads for this and other projects by Santacrab**
-[The Sea Tavern's website](https://piplup.net)
 ## Contributing
 To contribute to the repository, you can submit a pull request to the repository. Try to follow a format similar to the current codebase. All contributions are greatly appreciated! If you would like to discuss possible contributions without using GitHub, please contact us on the support server above. 
 
@@ -48,12 +44,13 @@ Please ensure you run the unit tests prior to submitting a pull request to the r
 ## Credits
 **Original Repository Owners**
 - [architdate (thecommondude)](https://github.com/architdate)
-- [kwsch (Kaphotics)](https://github.com/kwsch)
+- [kwsch (Kurt)](https://github.com/kwsch)
+- [santacrab2 (santacrab)](https://github.com/santacrab2)
 
 **Credit must be given where due...**
-This project would not be as amazing without the help of the following people who have helped me since the original [Auto-Legality-Mod](https://github.com/architdate/PKHeX-Auto-Legality-Mod).
-
 - [@kwsch](https://github.com/kwsch) for providing the IPlugin interface in PKHeX, which allows loading of this project's Plugin DLL files. Also for the support provided in the support server.
+- [@architdate](https://github.com/architdate) for the creation of the orginal repository and maintaining it for many years.
+- [@santacrab2](https://github.com/santacrab2) for maintaining a functional fork up to date with the latest PKHeX repository.
 - [@berichan](https://github.com/berichan) for adding USB-Botbase support to LiveHeX.
 - [@soopercool101](https://github.com/soopercool101) for many improvements to Smogon StrategyDex imports and various other fixes.
 - [@Lusamine](https://github.com/Lusamine) for all the help with stress testing the code with wacky sets!
