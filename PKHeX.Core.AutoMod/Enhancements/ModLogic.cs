@@ -619,6 +619,7 @@ public static class ModLogic
         var pklist = new ConcurrentBag<PKM>();
         var tr = APILegality.UseTrainerData ? TrainerSettings.GetSavedTrainerData(sav.Version) : sav;
         var str = GameInfo.Strings;
+        TrackingCount = 0;
         Parallel.For(1, personal.MaxSpeciesID + 1, id => //parallel For's end is exclusive
         {
             var s = (ushort)id;
@@ -661,17 +662,12 @@ public static class ModLogic
                     if (result != LegalizationResult.Regenerated)
                         continue;
 
-                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
-                                    (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender));
-
-                    if (exists)
-                        continue;
-
                     pklist.Add(pk);
                 }
                 if (!cfg.IncludeForms)
                     break;
             }
+            TrackingCount++;
         });
         return pklist.OrderBy(z => z.Species);
     }

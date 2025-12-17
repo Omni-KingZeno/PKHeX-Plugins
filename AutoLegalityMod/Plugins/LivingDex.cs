@@ -30,8 +30,7 @@ public class LivingDex : AutoModPlugin
 
     private async void GenLivingDex(object? sender, EventArgs e)
     {
-        bool egg = new Keyboard().ShiftKeyDown;
-        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Living {(egg ? "Egg " : "")}Dex?");
+        var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, $"Generate a Living Dex?");
         if (prompt != DialogResult.Yes)
             return;
         var sav = SaveFileEditor.SAV;
