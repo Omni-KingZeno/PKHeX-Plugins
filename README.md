@@ -67,3 +67,7 @@ Please ensure you run the unit tests prior to submitting a pull request to the r
 - [FlatIcon](https://www.flaticon.com/) for their icons. Author credits (Those Icons, Pixel perfect).
 - [Project Pokémon](https://github.com/projectpokemon/) for their Mystery Gift Event Gallery.
 - And all the countless users who have helped improve this project with ideas and suggestions!
+  
+<div align="center">
+  <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2FOmni-KingZeno%2FPKHeX-Plugins&label=VIews&icon=github&color=%236f42c1&message=&style=flat&tz=US%2FEastern">
+</div>
