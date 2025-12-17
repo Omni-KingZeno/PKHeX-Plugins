@@ -374,6 +374,7 @@ public static class ShowdownEdits
             la.GetSuggestedRelearnMoves(Moves, enc);
             pk.ClearRelearnMoves();
             pk.SetRelearnMoves(Moves);
+            pk.HealPP();
         }
         la = new LegalityAnalysis(pk);
         if (la.Info.Relearn.Any(z => z.Judgement == Severity.Invalid))
