@@ -17,12 +17,14 @@ public static class ModLogic
     public static LivingDexConfig Config { get; set; } = new()
     {
         IncludeForms = false,
+        IncludeGenderVariants = false,
         SetShiny = false,
         SetAlpha = false,
         TransferVersion = GameVersion.SL,
     };
 
     public static bool IncludeForms { get; set; }
+    public static bool IncludeGenderVariants { get; set; }
     public static bool SetShiny { get; set; }
     public static bool SetAlpha { get; set; }
     public static GameVersion TransferVersion { get; set; }
@@ -101,13 +103,37 @@ public static class ModLogic
                 }
                 if (!personal.IsPresentInGame(s, form) || HasNoBoxForm(s, f, sav))
                     continue;
-                var pk = AddPKM(sav, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
-                if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form && x.Species != 869))
-                    continue;
 
-                if (s == (ushort)Alcremie)
-                    pk.ChangeFormArgument(formarg);
-                pklist.Add(pk);
+                var gendersToGenerate = new List<byte> { 2 };
+
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s))
+                {
+                    if (s == (ushort)Pikachu && form != 0)
+                        gendersToGenerate = [0];
+                    else
+                        gendersToGenerate = [0, 1];
+                }
+
+                foreach (var gender in gendersToGenerate)
+                {
+                    var pk = AddPKM(sav, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
+                    if (pk is null)
+                        continue;
+
+                    if (Aesthetics.NonFormGenderVariant((Species)pk.Species) && gender != 2)
+                        pk.Gender = gender;
+
+                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
+                                    (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender) &&
+                                    x.Species != (ushort)Alcremie);
+
+                    if (exists)
+                        continue;
+
+                    if (s == (ushort)Alcremie)
+                        pk.ChangeFormArgument(formarg);
+                    pklist.Add(pk);
+                }
                 if (!cfg.IncludeForms)
                     break;
             }
@@ -159,13 +185,38 @@ public static class ModLogic
                 if (!destPersonal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, src))
                     continue;
                 var form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, src);
-                var pk = AddPKM(src, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
-                if (pk is null || pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form) || !destPersonal.IsPresentInGame(pk.Species, pk.Form))
-                    continue;
 
-                pklist.Add(pk);
-                if (!cfg.IncludeForms)
-                    break;
+                var gendersToGenerate = new List<byte> { 2 };
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s))
+                {
+                    if (s == (ushort)Species.Pikachu && form != 0)
+                        gendersToGenerate = [0];
+                    else
+                        gendersToGenerate = [0, 1];
+                }
+
+                foreach (var gender in gendersToGenerate)
+                {
+                    var pk = AddPKM(src, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
+                    if (pk is null)
+                        continue;
+
+                    if (Aesthetics.NonFormGenderVariant((Species)pk.Species) && gender != 2)
+                        pk.Gender = gender;
+
+                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
+                        (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender));
+
+                    if (exists)
+                        continue;
+
+                    if (!destPersonal.IsPresentInGame(pk.Species, pk.Form))
+                        continue;
+
+                    pklist.Add(pk);
+                    if (!cfg.IncludeForms)
+                        break;
+                }
             }
         });
         return pklist.OrderBy(z => z.Species);
@@ -201,7 +252,7 @@ public static class ModLogic
         || FormInfo.IsFusedForm(species, form, sav.Generation)
         || (FormInfo.IsTotemForm(species, form) && sav.Context is not EntityContext.Gen7);
 
-    private static bool HasNoEggForm(Species s, byte form) => 
+    private static bool HasNoEggForm(Species s, byte form) =>
             (s is Sinistea or Polteageist or Sinistcha or Poltchageist or // Can't Breed Authentic Form
             Pikachu or // Can't Breed Hat Forms
             Milcery or Alcremie) // Can't Breed Alcreamie Forms
@@ -583,19 +634,41 @@ public static class ModLogic
                 if (!personal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, sav) || HasNoEggForm((Species)s, f))
                     continue;
 
-                var template = new RegenTemplate(new ShowdownSet($"{str.Species[s]}"))
+                var gendersToGenerate = new List<byte> { 2 };
+
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s))
                 {
-                    Form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, sav)
-                };
+                    if (s == (ushort)Pikachu && f != 0)
+                        gendersToGenerate = [0];
+                    else
+                        gendersToGenerate = [0, 1];
+                }
 
-                if ((Species)s is Salazzle or Vespiquen or Kirlia or Gardevoir || ((Species)s is Oinkologne && f == 1))
-                    template.Gender = (byte?)Gender.Female;
+                foreach (var gender in gendersToGenerate)
+                {
+                    var template = new RegenTemplate(new ShowdownSet($"{str.Species[s]}"))
+                    {
+                        Form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, sav)
+                    };
 
-                var pk = tr.GenerateEgg(template, out var result);
-                if (result != LegalizationResult.Regenerated)
-                    continue;
+                    if (Aesthetics.NonFormGenderVariant((Species)s) && gender != 2)
+                        template.Gender = gender;
 
-                pklist.Add(pk);
+                    if ((Species)s is Salazzle or Vespiquen or Kirlia or Gardevoir || ((Species)s is Oinkologne && f == 1))
+                        template.Gender = (byte?)Gender.Female;
+
+                    var pk = tr.GenerateEgg(template, out var result);
+                    if (result != LegalizationResult.Regenerated)
+                        continue;
+
+                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
+                                    (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender));
+
+                    if (exists)
+                        continue;
+
+                    pklist.Add(pk);
+                }
                 if (!cfg.IncludeForms)
                     break;
             }

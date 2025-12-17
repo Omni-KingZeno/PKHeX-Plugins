@@ -245,6 +245,7 @@ public static class ShowdownSetLoader
         ModLogic.Config = new LivingDexConfig
         {
             IncludeForms = settings.IncludeForms,
+            IncludeGenderVariants = settings.IncludeGenderVariants,
             SetShiny = settings.SetShiny,
             SetAlpha = settings.SetAlpha,
             TransferVersion = settings.TransferVersion,
