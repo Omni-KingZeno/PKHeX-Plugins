@@ -123,6 +123,10 @@ public class PluginSettings
     public bool IncludeForms { get; set; }
 
     [Category(LivingDex)]
+    [Description("Generate gender variants of applicable Pokémon.")]
+    public bool IncludeGenderVariants { get; set; }
+
+    [Category(LivingDex)]
     [Description("Try to generate the shiny version of the Pokémon if possible.")]
     public bool SetShiny { get; set; }
 
