@@ -564,24 +564,8 @@ public static class SimpleEdits
     {
         var origin = new EvolutionOrigin(pk.Species, pk.Context, pk.Generation, 1, 100, OriginOptions.EncounterTemplate);
         var history = EvolutionChain.GetEvolutionChainsSearch(pk, origin, enc.Context);
-        var evoCrit = enc.Context switch
-        {
-            EntityContext.Gen1  => history.Gen1,
-            EntityContext.Gen2  => history.Gen2,
-            EntityContext.Gen3  => history.Gen3,
-            EntityContext.Gen4  => history.Gen4,
-            EntityContext.Gen5  => history.Gen5,
-            EntityContext.Gen6  => history.Gen6,
-            EntityContext.Gen7  => history.Gen7,
-            EntityContext.Gen7b => history.Gen7b,
-            EntityContext.Gen8  => history.Gen8,
-            EntityContext.Gen8b => history.Gen8b,
-            EntityContext.Gen8a => history.Gen8a,
-            EntityContext.Gen9  => history.Gen9,
-            EntityContext.Gen9a => history.Gen9a,
-            _ => throw new IndexOutOfRangeException(),
-        };
-        return evoCrit.Length > 0 && evoCrit[0].Method.IsTrade();
+        var evoCriteria = history.Get(enc.Context);
+        return evoCriteria.Length > 0 && evoCriteria[0].Method.IsTrade();
     }
 
     /// <summary>
