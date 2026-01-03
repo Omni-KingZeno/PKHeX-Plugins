@@ -1,10 +1,8 @@
 name: .NET Desktop
-
 on:
   push:
     branches:
       - Zen
-
 jobs:
   build:
     runs-on: windows-2022
@@ -18,10 +16,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup .NET 9.0
+    - name: Setup .NET 10.0
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
     
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
@@ -52,7 +50,7 @@ jobs:
       shell: pwsh
       run: |
         $nugetver = (Get-ChildItem "$env:USERPROFILE/.nuget/packages/pkhex.core" | Sort-Object -Property LastWriteTime -Descending)[0].Name
-        Copy-Item "${{ github.workspace }}\pkhex\PKHeX.Core\bin\Any CPU\Release\net9.0\PKHeX.Core.dll" "$env:USERPROFILE\.nuget\packages\pkhex.core\$nugetver\lib\net9.0"
+        Copy-Item "${{ github.workspace }}\pkhex\PKHeX.Core\bin\Any CPU\Release\net10.0\PKHeX.Core.dll" "$env:USERPROFILE\.nuget\packages\pkhex.core\$nugetver\lib\net9.0"
     
     - name: Build solution
       run: |
@@ -64,7 +62,7 @@ jobs:
     - name: Prepare artifacts
       run: |
         mkdir bin
-        xcopy ${{ github.workspace }}\AutoLegalityMod\bin\Release\net9.0-windows\AutoModPlugins.dll ${{ github.workspace }}\bin
+        xcopy ${{ github.workspace }}\AutoLegalityMod\bin\Release\net10.0-windows\AutoModPlugins.dll ${{ github.workspace }}\bin
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
