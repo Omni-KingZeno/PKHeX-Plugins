@@ -182,7 +182,7 @@ public static class ModLogic
 
             for (byte f = 0; f < num_forms; f++)
             {
-                if (!destPersonal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, src))
+                if (!destPersonal.IsPresentInGame(s, f) || !srcPersonal.IsPresentInGame(s, f) || HasNoBoxForm(s, f, src))
                     continue;
                 var form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, src);
 

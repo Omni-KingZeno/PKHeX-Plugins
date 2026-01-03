@@ -30,7 +30,7 @@ public static class FeatureTests
     [Fact]
     public static void FallbackFound()
     {
-        const string set = "Ditto";
+        const string set = "Magikarp";
         var showdown = new RegenTemplate(new ShowdownSet(set));
         showdown.Regen.HasTrainerSettings.Should().BeFalse();
     }
@@ -39,14 +39,14 @@ public static class FeatureTests
     public static void FallbackCreated()
     {
         // Creates extra requirements for generating without specifying Trainer Details
-        const string set = "Ditto\nLanguage: Japanese";
+        const string set = "Magikarp\nLanguage: Japanese";
         var dev = APILegality.EnableDevMode;
         APILegality.EnableDevMode = true;
 
         try
         {
             var showdown = new RegenTemplate(new ShowdownSet(set));
-            showdown.Species.Should().Be((int)Species.Ditto);
+            showdown.Species.Should().Be((int)Species.Magikarp);
 
             var regen = showdown.Regen;
             regen.HasTrainerSettings.Should().BeFalse();
@@ -72,14 +72,14 @@ public static class FeatureTests
     [Fact]
     public static void FallbackNotUsed()
     {
-        const string set = "Ditto\nLanguage: English";
+        const string set = "Magikarp\nLanguage: English";
         var dev = APILegality.EnableDevMode;
         APILegality.EnableDevMode = true;
 
         try
         {
             var showdown = new RegenTemplate(new ShowdownSet(set));
-            showdown.Species.Should().Be((int)Species.Ditto);
+            showdown.Species.Should().Be((int)Species.Magikarp);
 
             var regen = showdown.Regen;
             regen.HasTrainerSettings.Should().BeFalse();
@@ -118,14 +118,14 @@ public static class FeatureTests
     [Fact]
     public static void FallbackNotUsed2()
     {
-        const string set = "Ditto\nLanguage: Japanese";
+        const string set = "Magikarp\nLanguage: Japanese";
         var dev = APILegality.EnableDevMode;
         APILegality.EnableDevMode = true;
 
         try
         {
             var showdown = new RegenTemplate(new ShowdownSet(set));
-            showdown.Species.Should().Be((ushort)Species.Ditto);
+            showdown.Species.Should().Be((ushort)Species.Magikarp);
 
             var regen = showdown.Regen;
             regen.HasTrainerSettings.Should().BeFalse();
