@@ -565,7 +565,7 @@ public static class SimpleEdits
         var origin = new EvolutionOrigin(pk.Species, pk.Context, pk.Generation, 1, 100, OriginOptions.EncounterTemplate);
         var history = EvolutionChain.GetEvolutionChainsSearch(pk, origin, enc.Context);
         var evoCriteria = history.Get(enc.Context);
-        return evoCriteria.Length > 0 && evoCriteria[0].Method.IsTrade();
+        return evoCriteria.Length > 0 && evoCriteria[0].Method.IsTrade;
     }
 
     /// <summary>
