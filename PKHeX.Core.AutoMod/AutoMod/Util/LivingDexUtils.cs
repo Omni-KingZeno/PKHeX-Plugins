@@ -19,6 +19,6 @@ public readonly record struct LivingDexConfig
 
     public override string ToString()
     {
-        return $"TransferVersion: {TransferVersion}\nIncludeForms: {IncludeForms}\nSetShiny: {SetShiny}\nSetAlpha: {SetAlpha}\n";
+        return $"TransferVersion: {TransferVersion}\nIncludeForms: {IncludeForms}\nIncludeGenderVariants: {IncludeGenderVariants}\nSetShiny: {SetShiny}\nSetAlpha: {SetAlpha}\n";
     }
 }

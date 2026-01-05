@@ -52,7 +52,7 @@ public static class TransferDexTests
             cfgs[i] = new LivingDexConfig((byte)i);
         foreach (var ver in GetGameVersionsToTest)
         {
-            for (int i = Array.IndexOf(GetGameVersionsToTest, ver)+1; i < GetGameVersionsToTest.Length; i++)
+            for (int i = Array.IndexOf(GetGameVersionsToTest, ver) + 1; i < GetGameVersionsToTest.Length; i++)
             {
                 foreach (var cf in cfgs)
                     yield return [ver, cf, GetGameVersionsToTest[i]];
@@ -78,45 +78,77 @@ public static class TransferDexTests
     // Ideally should use purely PKHeX's methods or known total counts so that we're not verifying against ourselves.
     private static int GetExpectedDexCount(this SaveFile sav, LivingDexConfig cfg)
     {
-        Dictionary<ushort, List<byte>> speciesDict = [];
+        Dictionary<ushort, List<(byte Form, byte Gender)>> speciesDict = [];
         var personal = sav.Personal;
-        var destpersonal = BlankSaveFile.Get(cfg.TransferVersion, "ALM");
+        var destSav = BlankSaveFile.Get(cfg.TransferVersion, "ALM");
         var species = Enumerable.Range(1, sav.MaxSpeciesID).Select(x => (ushort)x);
         foreach (ushort s in species)
         {
             if (!personal.IsSpeciesInGame(s))
                 continue;
 
-            List<byte> forms = [];
+            List<(byte Form, byte Gender)> formGenderPairs = [];
             var formCount = personal[s].FormCount;
             var str = GameInfo.Strings;
             if (formCount == 1 && cfg.IncludeForms) // Validate through form lists
                 formCount = (byte)FormConverter.GetFormList(s, str.types, str.forms, GameInfo.GenderSymbolUnicode, sav.Context).Length;
 
+            // Handle Alcremie special case
+            if (s == (ushort)Species.Alcremie)
+                formCount = (byte)(formCount * 6);
+
+            byte acform = 0;
             for (byte f = 0; f < formCount; f++)
             {
-                if (!destpersonal.Personal.IsPresentInGame(s, f) || !sav.Personal.IsPresentInGame(s, f))
-                    continue;
-
-                if (FormInfo.IsFusedForm(s, f, sav.Generation) || FormInfo.IsBattleOnlyForm(s, f, sav.Generation) || (FormInfo.IsTotemForm(s, f) && sav.Context is not EntityContext.Gen7) || FormInfo.IsLordForm(s, f, sav.Context))
-                    continue;
-
-                var valid = sav.GetRandomEncounter(s, f, cfg.SetShiny, cfg.SetAlpha, out PKM? pk);
-                if (pk is not null && valid && !forms.Contains(pk.Form))
+                var form = f;
+                if (s == (ushort)Species.Alcremie)
                 {
-                    if (pk.Form == f || (sav.Generation == 2 && s == (ushort)Species.Unown && cfg.SetShiny))
+                    form = acform;
+                    if (f % 6 == 0 && f != 0)
+                        acform++;
+                }
+
+                if (!destSav.Personal.IsPresentInGame(s, form) || !sav.Personal.IsPresentInGame(s, form))
+                    continue;
+
+                if (FormInfo.IsFusedForm(s, form, sav.Generation) || FormInfo.IsBattleOnlyForm(s, form, sav.Generation) || (FormInfo.IsTotemForm(s, form) && sav.Context is not EntityContext.Gen7) || FormInfo.IsLordForm(s, form, sav.Context))
+                    continue;
+
+                var gendersToCheck = new List<byte> { 2 };
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s) && sav.Generation != 1)
+                {
+                    if (s == (ushort)Species.Pikachu && form != 0)
+                        gendersToCheck = [0];
+                    else
+                        gendersToCheck = [0, 1];
+                }
+
+                foreach (var gender in gendersToCheck)
+                {
+                    var valid = sav.GetRandomEncounter(s, form, gender, cfg.SetShiny, cfg.SetAlpha, out PKM? pk);
+                    if (pk is not null && valid)
                     {
-                        forms.Add(pk.Form);
-                        if (!cfg.IncludeForms)
-                            break;
+                        var pkForm = pk.Form;
+
+                        if (pkForm == form || (sav.Generation == 2 && s == (ushort)Species.Unown && cfg.SetShiny))
+                        {
+                            var pair = (pkForm, pk.Gender);
+                            if (!formGenderPairs.Contains(pair))
+                            {
+                                formGenderPairs.Add(pair);
+                            }
+                        }
                     }
                 }
+
+                if (!cfg.IncludeForms && formGenderPairs.Count > 0)
+                    break;
             }
 
-            if (forms.Count > 0)
-                speciesDict.TryAdd(s, forms);
+            if (formGenderPairs.Count > 0)
+                speciesDict.TryAdd(s, formGenderPairs);
         }
 
-        return cfg.IncludeForms ? speciesDict.Values.Sum(x => x.Count) : speciesDict.Count;
+        return speciesDict.Values.Sum(x => x.Count);
     }
 }

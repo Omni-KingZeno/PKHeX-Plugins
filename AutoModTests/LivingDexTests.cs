@@ -74,7 +74,7 @@ public static class LivingDexTests
     // Ideally should use purely PKHeX's methods or known total counts so that we're not verifying against ourselves.
     private static int GetExpectedDexCount(this SimpleTrainerInfo sav, IPersonalTable personal, LivingDexConfig cfg)
     {
-        Dictionary<ushort, List<byte>> speciesDict = [];
+        Dictionary<ushort, List<(byte Form, byte Gender)>> speciesDict = [];
         var context = sav.Context;
         var generation = sav.Generation;
         for (ushort s = 1; s <= personal.MaxSpeciesID; s++)
@@ -82,7 +82,8 @@ public static class LivingDexTests
             if (!personal.IsSpeciesInGame(s))
                 continue;
 
-            List<byte> forms = [];
+
+            List<(byte Form, byte Gender)> formGenderPairs = [];
             var formCount = personal[s].FormCount;
             var str = GameInfo.Strings;
             if (formCount == 1 && cfg.IncludeForms) // Validate through form lists
@@ -110,17 +111,40 @@ public static class LivingDexTests
                 if (!personal.IsPresentInGame(s, form) || FormInfo.IsFusedForm(s, form, generation) || FormInfo.IsBattleOnlyForm(s, form, generation) || (FormInfo.IsTotemForm(s, form) && context is not EntityContext.Gen7) || FormInfo.IsLordForm(s, form, context))
                     continue;
 
-                var valid = sav.GetRandomEncounter(s, form, cfg.SetShiny, cfg.SetAlpha, out PKM? pk);
-                if (pk is null || !valid || pk.Form != form)
-                    continue;
+                var gendersToCheck = new List<byte> { 2 };
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s) && generation != 1)
+                {
+                    if (s == (ushort)Species.Pikachu && form != 0)
+                        gendersToCheck = [0];
+                    else
+                        gendersToCheck = [0, 1];
+                }
 
-                forms.Add(form);
-                if (!cfg.IncludeForms)
+                foreach (var gender in gendersToCheck)
+                {
+                    var valid = sav.GetRandomEncounter(s, form, gender, cfg.SetShiny, cfg.SetAlpha, out PKM? pk);
+                    if (pk is not null && valid)
+                    {
+                        var pkForm = pk.Form;
+                        var pkGender = gender != 2 ? gender : pk.Gender;
+
+                        if (pkForm == form || (sav.Generation == 2 && s == (ushort)Species.Unown && cfg.SetShiny))
+                        {
+                            var pair = (pkForm, pkGender);
+                            if (!formGenderPairs.Contains(pair))
+                            {
+                                formGenderPairs.Add(pair);
+                            }
+                        }
+                    }
+                }
+
+                if (!cfg.IncludeForms && formGenderPairs.Count > 0)
                     break;
             }
 
-            if (forms.Count > 0)
-                speciesDict.TryAdd(s, forms);
+            if (formGenderPairs.Count > 0)
+                speciesDict.TryAdd(s, formGenderPairs);
         }
 
         return cfg.IncludeForms ? speciesDict.Values.Sum(x => x.Count) : speciesDict.Count;

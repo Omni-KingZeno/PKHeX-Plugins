@@ -193,7 +193,7 @@ public static class Legalizer
             return template;
 
         template.Form = f;
-        var legalencs = tr.GetRandomEncounter(species, f, set.Shiny, false, out var legal);
+        var legalencs = tr.GetRandomEncounter(species, f, template.Gender, set.Shiny, false, out var legal);
         if (legalencs && legal != null)
             template = legal;
 

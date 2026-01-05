@@ -106,7 +106,7 @@ public static class ModLogic
 
                 var gendersToGenerate = new List<byte> { 2 };
 
-                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s))
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s) && generation != 1)
                 {
                     if (s == (ushort)Pikachu && form != 0)
                         gendersToGenerate = [0];
@@ -116,16 +116,11 @@ public static class ModLogic
 
                 foreach (var gender in gendersToGenerate)
                 {
-                    var pk = AddPKM(sav, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
+                    var pk = AddPKM(sav, tr, s, form, gender, cfg.SetShiny, cfg.SetAlpha);
                     if (pk is null)
                         continue;
 
-                    if (Aesthetics.NonFormGenderVariant((Species)pk.Species) && gender != 2)
-                        pk.Gender = gender;
-
-                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
-                                    (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender) &&
-                                    x.Species != (ushort)Alcremie);
+                    bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form && (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender) && x.Species != (ushort)Alcremie);
 
                     if (exists)
                         continue;
@@ -187,7 +182,7 @@ public static class ModLogic
                 var form = cfg.IncludeForms ? f : GetBaseForm((Species)s, f, src);
 
                 var gendersToGenerate = new List<byte> { 2 };
-                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s))
+                if (cfg.IncludeGenderVariants && Aesthetics.NonFormGenderVariant((Species)s) && src.Generation != 1)
                 {
                     if (s == (ushort)Species.Pikachu && form != 0)
                         gendersToGenerate = [0];
@@ -197,13 +192,13 @@ public static class ModLogic
 
                 foreach (var gender in gendersToGenerate)
                 {
-                    var pk = AddPKM(src, tr, s, form, cfg.SetShiny, cfg.SetAlpha);
+                    var pk = AddPKM(src, tr, s, form, gender, cfg.SetShiny, cfg.SetAlpha);
                     if (pk is null)
                         continue;
 
-                    if (Aesthetics.NonFormGenderVariant((Species)pk.Species) && gender != 2)
-                        pk.Gender = gender;
-
+                    if (pk.Form != form && !(src.Generation == 2 && s == (ushort)Unown && cfg.SetShiny))
+                        continue;
+                    
                     bool exists = pklist.Any(x => x.Species == pk.Species && x.Form == pk.Form &&
                         (!cfg.IncludeGenderVariants || !Aesthetics.NonFormGenderVariant((Species)s) || x.Gender == pk.Gender));
 
@@ -214,9 +209,9 @@ public static class ModLogic
                         continue;
 
                     pklist.Add(pk);
-                    if (!cfg.IncludeForms)
-                        break;
                 }
+                if (!cfg.IncludeForms)
+                    break;
             }
             TrackingCount++;
         });
@@ -259,9 +254,9 @@ public static class ModLogic
             Milcery or Alcremie) // Can't Breed Alcreamie Forms
             && form != 0;
 
-    private static PKM? AddPKM(ITrainerInfo sav, ITrainerInfo tr, ushort species, byte form, bool shiny, bool alpha)
+    private static PKM? AddPKM(ITrainerInfo sav, ITrainerInfo tr, ushort species, byte form, byte gender, bool shiny, bool alpha)
     {
-        if (sav.GetRandomEncounter(species, form, shiny, alpha, out var pk) && pk is { Species: not 0 })
+        if (sav.GetRandomEncounter(species, form, gender, shiny, alpha, out var pk) && pk is { Species: not 0 })
         {
             pk.Heal();
             return pk;
@@ -272,7 +267,7 @@ public static class ModLogic
             return null;
 
         tr = new SimpleTrainerInfo(GameVersion.YW) { Language = tr.Language, OT = tr.OT, TID16 = tr.TID16 };
-        var enc = tr.GetRandomEncounter(species, form, shiny, alpha, out var pkm);
+        var enc = tr.GetRandomEncounter(species, form, gender, shiny, alpha, out var pkm);
         if (enc && pkm is PK1 pk1)
             return pk1.ConvertToPK2();
         return null;
@@ -288,10 +283,10 @@ public static class ModLogic
     /// <param name="alpha"></param>
     /// <param name="pk">Result legal pkm</param>
     /// <returns>True if a valid result was generated, false if the result should be ignored.</returns>
-    public static bool GetRandomEncounter(this ITrainerInfo tr, ushort species, byte form, bool shiny, bool alpha, out PKM? pk)
+    public static bool GetRandomEncounter(this ITrainerInfo tr, ushort species, byte form, byte gender, bool shiny, bool alpha, out PKM? pk)
     {
         var blank = EntityBlank.GetBlank(tr);
-        pk = GetRandomEncounter(blank, tr, species, form, shiny, alpha);
+        pk = GetRandomEncounter(blank, tr, species, form, gender, shiny, alpha);
         if (pk is null)
             return false;
 
@@ -309,10 +304,13 @@ public static class ModLogic
     /// <param name="shiny"></param>
     /// <param name="alpha"></param>
     /// <returns>Result legal pkm, null if data should be ignored.</returns>
-    private static PKM? GetRandomEncounter(PKM blank, ITrainerInfo tr, ushort species, byte form, bool shiny, bool alpha)
+    private static PKM? GetRandomEncounter(PKM blank, ITrainerInfo tr, ushort species, byte form, byte gender, bool shiny, bool alpha)
     {
         blank.Species = species;
-        blank.Gender = blank.GetSaneGender();
+        if (gender == 2)
+            blank.GetSaneGender();
+        else
+            blank.SetSaneGender(gender);
         if (species is ((ushort)Meowstic) or ((ushort)Indeedee))
         {
             blank.Gender = form;
