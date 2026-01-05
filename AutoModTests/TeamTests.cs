@@ -22,6 +22,101 @@ public static class TeamTests
     private static string TestPath => TestUtil.GetTestFolder("ShowdownSets");
     private static string LogDirectory => Path.Combine(Directory.GetCurrentDirectory(), "logs");
 
+    public static TheoryData<string, GameVersion[]> TeamTestCases => new()
+    {
+        // Anubis tests
+        { AnubisPA8, new[] { PLA, BD } },
+        { AnubisPB7, new[] { SW, GP } },
+        { AnubisPB8, new[] { BD } },
+        { AnubisPK2, new[] { C } },
+        { AnubisPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E } },
+        { AnubisPK4, new[] { SW, US, SN, OR, X, B2, B, Pt } },
+        { AnubisPK5, new[] { SW, US, SN, OR, X, B2 } },
+        { AnubisPK6, new[] { SW, US, SN, OR } },
+        { AnubisPK7, new[] { SW, US } },
+        { AnubisPK8, new[] { SW } },
+        { AnubisPK9, new[] { SL } },
+        { AnubisPA9, new[] { ZA } },
+        { AnubisNTPB7, new[] { GE } },
+        { AnubisTPK7, new[] { SW, US } },
+        { AnubisTPK8, new[] { SW } },
+        { AnubisVCPK7, new[] { SW, US } },
+        
+        // RoC tests
+        { RoCPA8, new[] { PLA, BD } },
+        { RoCPB7, new[] { SW, GP } },
+        { RoCPB8, new[] { BD } },
+        { RoCPK1, new[] { RD, C } },
+        { RoCPK2, new[] { C } },
+        { RoCPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E } },
+        { RoCPK4, new[] { SW, US, SN, OR, X, B2, B, Pt } },
+        { RoCPK5, new[] { SW, US, SN, OR, X, B2 } },
+        { RoCPK6, new[] { SW, US, SN, OR } },
+        { RoCPK7, new[] { SW, US } },
+        { RoCPK8, new[] { SW } },
+        { RoCPK9, new[] { SL } },
+        { RoCNTPK1, new[] { RD } },
+        { RoCNTPK3, new[] { E } },
+        { RoCNTPK4, new[] { Pt } },
+        { RoCNTPK5, new[] { B2, B } },
+        { RoCNTPK6, new[] { OR } },
+        { RoCNTPK7, new[] { US } },
+        { RoCVCPK7, new[] { SW, US } },
+        
+        // Underleveled tests
+        { UnderlevelPK1, new[] { RD, C } },
+        { UnderlevelPK2, new[] { C } },
+        { UnderlevelPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E } },
+        { UnderlevelPK4, new[] { SW, US, SN, OR, X, B2, B, Pt } },
+        { UnderlevelPK5, new[] { SW, US, SN, OR, X, B2 } },
+        { UnderlevelPK6, new[] { SW, US, SN, OR } },
+        { UnderlevelPK7, new[] { SW, US } },
+        { UnderlevelNTPK4, new[] { Pt } },
+        { UnderlevelVCPK7, new[] { SW, US } }
+    };
+
+    [Theory]
+    [MemberData(nameof(TeamTestCases))]
+    public static void VerifyFile(string path, GameVersion[] testversions)
+    {
+        Directory.CreateDirectory(LogDirectory);
+        var full = Path.Combine(TestPath, path);
+        var dev = APILegality.EnableDevMode;
+        APILegality.EnableDevMode = true;
+
+        var res = RunVerification(full, testversions);
+        APILegality.EnableDevMode = dev;
+
+        var msg = new StringBuilder();
+        var error = new StringBuilder();
+        var testfailed = false;
+        foreach (var result in res)
+        {
+            var illegalcount = result.Failed.Count;
+            if (illegalcount == 0)
+                continue;
+
+            testfailed = true;
+            msg.AppendLine($"GameVersion {result.Version} : Illegal: {illegalcount} | Legal: {result.Legal.Count}");
+
+            error.AppendLine($"=============== GameVersion: {result.Version} ===============");
+            foreach (var f in result.Failed)
+            {
+                error.AppendLine(f.Set.Text);
+                error.AppendLine(f.Result.Report());
+                error.AppendLine();
+            }
+        }
+        if (error.Length != 0)
+        {
+            var fileName = $"{Path.GetFileName(path).Replace('.', '_')}{DateTime.Now:_yyyy-MM-dd-HH-mm-ss}.log";
+            var dest = Path.Combine(LogDirectory, fileName);
+            File.WriteAllText(dest, error.ToString());
+        }
+
+        testfailed.Should().BeFalse(msg.ToString());
+    }
+
     private static List<TestResult> RunVerification(string file, ReadOnlySpan<GameVersion> saves)
     {
         var results = new List<TestResult>(saves.Length);
@@ -87,91 +182,6 @@ public static class TeamTests
             }
         }
         return results;
-    }
-
-    [Theory]
-    [InlineData(AnubisPA8, new[] { PLA, BD })]
-    [InlineData(AnubisPB7, new[] { SW, GP })]
-    [InlineData(AnubisPB8, new[] { BD })]
-    [InlineData(AnubisPK2, new[] { C })]
-    [InlineData(AnubisPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E })]
-    [InlineData(AnubisPK4, new[] { SW, US, SN, OR, X, B2, B, Pt })]
-    [InlineData(AnubisPK5, new[] { SW, US, SN, OR, X, B2 })]
-    [InlineData(AnubisPK6, new[] { SW, US, SN, OR })]
-    [InlineData(AnubisPK7, new[] { SW, US })]
-    [InlineData(AnubisPK8, new[] { SW })]
-    [InlineData(AnubisPK9, new[] { SL })]
-    [InlineData(AnubisPA9, new[] { ZA })]
-    [InlineData(AnubisNTPB7, new[] { GE })]
-    [InlineData(AnubisTPK7, new[] { SW, US })]
-    [InlineData(AnubisTPK8, new[] { SW })]
-    [InlineData(AnubisVCPK7, new[] { SW, US })]
-    [InlineData(RoCPA8, new[] { PLA, BD })]
-    [InlineData(RoCPB7, new[] { SW, GP })]
-    [InlineData(RoCPB8, new[] { BD })]
-    [InlineData(RoCPK1, new[] { RD, C })]
-    [InlineData(RoCPK2, new[] { C })]
-    [InlineData(RoCPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E })]
-    [InlineData(RoCPK4, new[] { SW, US, SN, OR, X, B2, B, Pt })]
-    [InlineData(RoCPK5, new[] { SW, US, SN, OR, X, B2 })]
-    [InlineData(RoCPK6, new[] { SW, US, SN, OR })]
-    [InlineData(RoCPK7, new[] { SW, US })]
-    [InlineData(RoCPK8, new[] { SW })]
-    [InlineData(RoCPK9, new[] { SL })]
-    [InlineData(RoCNTPK1, new[] { RD })]
-    [InlineData(RoCNTPK3, new[] { E })]
-    [InlineData(RoCNTPK4, new[] { Pt })]
-    [InlineData(RoCNTPK5, new[] { B2, B })]
-    [InlineData(RoCNTPK6, new[] { OR })]
-    [InlineData(RoCNTPK7, new[] { US })]
-    [InlineData(RoCVCPK7, new[] { SW, US })]
-    [InlineData(UnderlevelPK1, new[] { RD, C })]
-    [InlineData(UnderlevelPK2, new[] { C })]
-    [InlineData(UnderlevelPK3, new[] { SW, US, SN, OR, X, B2, B, Pt, E })]
-    [InlineData(UnderlevelPK4, new[] { SW, US, SN, OR, X, B2, B, Pt })]
-    [InlineData(UnderlevelPK5, new[] { SW, US, SN, OR, X, B2 })]
-    [InlineData(UnderlevelPK6, new[] { SW, US, SN, OR })]
-    [InlineData(UnderlevelPK7, new[] { SW, US })]
-    [InlineData(UnderlevelNTPK4, new[] { Pt })]
-    [InlineData(UnderlevelVCPK7, new[] { SW, US })]
-    public static void VerifyFile(string path, GameVersion[] testversions)
-    {
-        Directory.CreateDirectory(LogDirectory);
-        var full = Path.Combine(TestPath, path);
-        var dev = APILegality.EnableDevMode;
-        APILegality.EnableDevMode = true;
-
-        var res = RunVerification(full, testversions);
-        APILegality.EnableDevMode = dev;
-
-        var msg = new StringBuilder();
-        var error = new StringBuilder();
-        var testfailed = false;
-        foreach (var result in res)
-        {
-            var illegalcount = result.Failed.Count;
-            if (illegalcount == 0)
-                continue;
-
-            testfailed = true;
-            msg.AppendLine($"GameVersion {result.Version} : Illegal: {illegalcount} | Legal: {result.Legal.Count}");
-
-            error.AppendLine($"=============== GameVersion: {result.Version} ===============");
-            foreach (var f in result.Failed)
-            {
-                error.AppendLine(f.Set.Text);
-                error.AppendLine(f.Result.Report());
-                error.AppendLine();
-            }
-        }
-        if (error.Length != 0)
-        {
-            var fileName = $"{Path.GetFileName(path).Replace('.', '_')}{DateTime.Now:_yyyy-MM-dd-HH-mm-ss}.log";
-            var dest = Path.Combine(LogDirectory, fileName);
-            File.WriteAllText(dest, error.ToString());
-        }
-
-        testfailed.Should().BeFalse(msg.ToString());
     }
 
     // Anubis test file paths

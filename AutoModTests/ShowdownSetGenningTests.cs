@@ -9,10 +9,15 @@ public static class ShowdownSetGenningTests
 {
     static ShowdownSetGenningTests() => TestUtil.InitializePKHeXEnvironment();
 
+    public static TheoryData<GameVersion, string> TestCases => new()
+    {
+        { GameVersion.US, Meowstic },
+        { GameVersion.US, Darkrai },
+        { GameVersion.B2, Genesect }
+    };
+
     [Theory]
-    [InlineData(GameVersion.US, Meowstic)]
-    [InlineData(GameVersion.US, Darkrai)]
-    [InlineData(GameVersion.B2, Genesect)]
+    [MemberData(nameof(TestCases))]
     public static void VerifyManually(GameVersion game, string txt)
     {
         var dev = APILegality.EnableDevMode;
