@@ -65,7 +65,8 @@ public class LivingDex : AutoModPlugin
         // waiting for the task to finish
         await pollingTask;
 
-        int generated = IngestToBoxes(sav, dex, extra);
+        prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "Overwrite any existing Pokémon in your boxes?");
+        int generated = IngestToBoxes(sav, dex, extra, prompt == DialogResult.Yes);
         System.Diagnostics.Debug.WriteLine($"Generated Living Dex with {generated} entries.");
         SaveFileEditor.ReloadSlots();
         if (extra.Count == 0)
