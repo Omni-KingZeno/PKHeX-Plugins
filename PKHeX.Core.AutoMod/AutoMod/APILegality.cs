@@ -255,6 +255,21 @@ public static class APILegality
         }
     }
 
+    public static bool CheckRequestedAbility(PKM template, IBattleTemplate set)
+    {
+        var pi = template.PersonalInfo;
+        bool validAbility = false;
+        for (int i = 0; i < pi.AbilityCount; i++)
+        {
+            if (pi.GetAbilityAtIndex(i) == set.Ability)
+            {
+                validAbility = true;
+                break;
+            }
+        }
+        return validAbility;
+    }
+
     public static AbilityRequest GetRequestedAbility(PKM template, IBattleTemplate set)
     {
         if (template.AbilityNumber == 4)

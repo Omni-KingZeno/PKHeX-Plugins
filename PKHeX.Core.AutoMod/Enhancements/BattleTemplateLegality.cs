@@ -21,6 +21,7 @@ public static class BattleTemplateLegality
     public static string BALL_INVALID { get; set; } = "{0} Ball is not possible for the given set.";
     public static string ONLY_HIDDEN_ABILITY_AVAILABLE { get; set; } = "You can only obtain {0} with hidden ability in this game.";
     public static string HIDDEN_ABILITY_UNAVAILABLE { get; set; } = "You cannot obtain {0} with hidden ability in this game.";
+    public static string ABILITY_UNAVAILABLE { get; set; } = "You cannot obtain {0} with the {1} ability in this game.";
     public static string HOME_TRANSFER_ONLY { get; set; } = "{0} is only available in this game through Home Transfer.";
     public static string BAD_WORDS { get; set; } = "{0}'s nickname, OT or HT contains a filtered word.";
 
@@ -99,6 +100,9 @@ public static class BattleTemplateLegality
             return string.Format(BAD_WORDS, species_name);
 
         // Ability checks
+        if (set.Ability != -1 && !APILegality.CheckRequestedAbility(failed, set))
+            return string.Format(ABILITY_UNAVAILABLE, species_name, (Ability)set.Ability);
+
         var abilityreq = APILegality.GetRequestedAbility(failed, set);
         if (abilityreq == AbilityRequest.NotHidden && encounters.All(z => z is { Ability: AbilityPermission.OnlyHidden }))
             return string.Format(ONLY_HIDDEN_ABILITY_AVAILABLE, species_name);
