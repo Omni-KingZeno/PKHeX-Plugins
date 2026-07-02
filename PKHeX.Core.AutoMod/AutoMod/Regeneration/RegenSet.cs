@@ -43,7 +43,7 @@ public sealed class RegenSet
         }
 
         modified.Add($".MetLocation={pk.MetLocation}");
-        modified.Add($".MetDate={pk.MetDate}");
+        modified.Add($".MetDate={pk.MetDate:yyyMMdd}");
         modified.Add($".MetLevel={pk.MetLevel}");
         if (pk is IFormArgument { FormArgument: not 0 } fa)
             modified.Add($".FormArgument={fa.FormArgument}");
@@ -216,7 +216,7 @@ public sealed class RegenSet
             sb.AppendLine(RegenUtil.GetSummary(Extra));
 
         if (HasTrainerSettings && Trainer != null)
-            sb.AppendLine(RegenUtil.GetSummary(Trainer));
+            sb.Append(RegenUtil.GetSummary(Trainer));
 
         if (HasBatchSettings)
             sb.AppendLine(RegenUtil.GetSummary(Batch));

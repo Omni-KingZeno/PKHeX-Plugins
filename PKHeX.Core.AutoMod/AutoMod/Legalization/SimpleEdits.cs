@@ -357,7 +357,8 @@ public static class SimpleEdits
     /// </summary>
     /// <param name="pk">The PKM to modify.</param>
     /// <param name="enc">The encounter template.</param>
-    public static void SetFriendship(this PKM pk, IEncounterTemplate enc)
+    /// <param name="friendship">The friendship value to set.</param>
+    public static void SetFriendship(this PKM pk, IEncounterTemplate enc, byte friendship)
     {
         if (enc.Generation <= 2)
         {
@@ -369,11 +370,11 @@ public static class SimpleEdits
         if (wasNeverOriginalTrainer)
         {
             pk.OriginalTrainerFriendship = (byte)GetBaseFriendship(enc);
-            pk.HandlingTrainerFriendship = pk.HasMove(218) ? (byte)0 : (byte)255;
+            pk.HandlingTrainerFriendship = pk.HasMove(218) ? (byte)0 : friendship;
         }
         else
         {
-            pk.CurrentFriendship = pk.HasMove(218) ? (byte)0 : (byte)255;
+            pk.CurrentFriendship = pk.HasMove(218) ? (byte)0 : friendship;
         }
     }
 

@@ -50,7 +50,7 @@ jobs:
       shell: pwsh
       run: |
         $nugetver = (Get-ChildItem "$env:USERPROFILE/.nuget/packages/pkhex.core" | Sort-Object -Property LastWriteTime -Descending)[0].Name
-        Copy-Item "${{ github.workspace }}\pkhex\PKHeX.Core\bin\Any CPU\Release\net10.0\PKHeX.Core.dll" "$env:USERPROFILE\.nuget\packages\pkhex.core\$nugetver\lib\net9.0"
+        Copy-Item "${{ github.workspace }}\pkhex\PKHeX.Core\bin\Any CPU\Release\net10.0\PKHeX.Core.dll" "$env:USERPROFILE\.nuget\packages\pkhex.core\$nugetver\lib\net10.0"
     
     - name: Build solution
       run: |

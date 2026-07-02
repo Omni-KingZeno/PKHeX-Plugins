@@ -587,7 +587,7 @@ public static class APILegality
 
         // Actions that do not affect set legality
         pk.SetHandlerAndMemory(handler, enc);
-        pk.SetFriendship(enc);
+        pk.SetFriendship(enc, set.Friendship);
         pk.SetRecordFlags(set.Moves);
 
         // Legality Fixing
@@ -672,7 +672,7 @@ public static class APILegality
             case (int)Species.Kartana when pk.Nature == Nature.Timid && set.IVs[1] <= 21: // Speed boosting Timid Kartana ATK IVs <= 19
                 t.HT_ATK = false;
                 break;
-            case (int)Species.Stakataka when pk.StatNature == Nature.Lonely && set.IVs[2] <= 17: // Atk boosting Lonely Stakataka DEF IVs <= 15
+            case (int)Species.Stakataka when pk.StatAlignment == Nature.Lonely && set.IVs[2] <= 17: // Atk boosting Lonely Stakataka DEF IVs <= 15
                 t.HT_DEF = false;
                 break;
             case (int)Species.Pyukumuku when set.IVs[2] == 0 && set.IVs[5] == 0 && pk.Ability == (int)Ability.InnardsOut: // 0 Def / 0 Spd Pyukumuku with innards out
@@ -1011,7 +1011,7 @@ public static class APILegality
             Nature nature = enc.Species == (int)Species.Toxtricity ? ToxtricityUtil.GetRandomNature(ref rand, pk.Form) : (Nature)rand.NextInt(25);
             if (criteria.Nature != Nature.Random && nature != criteria.Nature)
                 continue;
-            pk.Nature = pk.StatNature = nature;
+            pk.Nature = pk.StatAlignment = nature;
 
             pk.HeightScalar = (byte)(rand.NextInt(0x81) + rand.NextInt(0x80));
             pk.WeightScalar = (byte)(rand.NextInt(0x81) + rand.NextInt(0x80));
