@@ -7,6 +7,7 @@ using PKHeX.Core.AutoMod;
 using System.Collections.Generic;
 using Microsoft.VisualBasic.Devices;
 using System.Threading.Tasks;
+using System.Threading;
 using AutoModPlugins.GUI;
 
 namespace AutoModPlugins;
@@ -15,6 +16,8 @@ public class LivingDex : AutoModPlugin
 {
     public override string Name => "Generate Living Dex";
     public override int Priority => 1;
+
+    public static CancellationTokenSource? cts;
 
     protected override void AddPluginControl(ToolStripDropDownItem modmenu)
     {
@@ -40,17 +43,28 @@ public class LivingDex : AutoModPlugin
         };
         t.Show();
 
+        cts = new CancellationTokenSource();
+
         // Wait for the ALM status bar handle to be created
         await Task.Run(() =>
         {
             while (!t.IsHandleCreated)
-                System.Threading.Thread.Sleep(10);
+                Thread.Sleep(10);
         });
 
         // After showing the status bar, then start the polling loop
         var pollingTask = Task.Run(() => PollingLoop(t));
 
-        var dex = await Task.Run(() => sav.GenerateLivingDex(sav.Personal));
+        IEnumerable<PKM> dex;
+        try
+        {
+            dex = await Task.Run(() => sav.GenerateLivingDex(sav.Personal), cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            dex = null!;
+        }
+
         List<PKM> extra = [];
 
         // Now we can safely close the status bar
@@ -64,6 +78,9 @@ public class LivingDex : AutoModPlugin
         }
         // waiting for the task to finish
         await pollingTask;
+
+        if (cts.IsCancellationRequested || dex is null)
+            return;
 
         prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "Overwrite any existing Pokémon in your boxes?");
         int generated = IngestToBoxes(sav, dex, extra, prompt == DialogResult.Yes);
@@ -111,9 +128,10 @@ public class LivingDex : AutoModPlugin
                     t.Count = lastCount;
                 }
             }
-            System.Threading.Thread.Sleep(50);
+            Thread.Sleep(50);
         }
     }
+
     private static int IngestToBoxes(SaveFile sav, IEnumerable<PKM> list, IList<PKM> extra, bool overwrite, int slot = 0)
     {
         int generated = 0;
@@ -126,7 +144,7 @@ public class LivingDex : AutoModPlugin
             {
                 slot++;
             }
-            while (!TryAdd(sav, extra, pk,overwrite, ref slot));
+            while (!TryAdd(sav, extra, pk, overwrite, ref slot));
         }
         return generated;
     }

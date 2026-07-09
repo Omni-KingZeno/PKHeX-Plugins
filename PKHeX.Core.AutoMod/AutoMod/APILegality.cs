@@ -1470,7 +1470,7 @@ public static class APILegality
             raw.Nickname = SpeciesName.GetEggName(raw.Language, raw.Format);
 
             // Wipe met date
-            if (raw.Format >= 5)
+            if (raw.Format >= 4)
                 raw.MetDate = null;
 
             // Wipe egg memories

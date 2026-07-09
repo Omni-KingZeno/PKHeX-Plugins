@@ -23,8 +23,24 @@ public partial class ALMStatusBar : Form
     {
         InitializeComponent();
         this.Text = title;
+        this.FormClosing += ALMStatusBar_FormClosing;
         _maxTasks = amountOftasks;
         pb_status.Maximum = amountOftasks;
         Count = 0;
+    }
+
+    private void ALMStatusBar_FormClosing(object? sender, EventArgs e)
+    {
+        if (e is FormClosingEventArgs fcea && fcea.CloseReason == CloseReason.UserClosing)
+        {
+            var prompt = WinFormsUtil.Prompt(MessageBoxButtons.YesNo, "Are you sure you want to cancel the Living Dex generation?");
+            if (prompt != DialogResult.Yes)
+            {
+                fcea.Cancel = true;
+                return;
+            }
+            LivingDex.cts?.Cancel();
+
+        }
     }
 }
