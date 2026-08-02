@@ -140,7 +140,7 @@ public static class APILegality
                         break;
                     case IGenerateSeed64 GS64:
                         var converted64 = Convert.ToUInt64(regen.SeedFilters[0], 16);
-                        GS64.GenerateSeed64(raw, converted64); break;
+                        GS64.GenerateSeed64(raw, dest, converted64); break;
                 }
             }
             else
@@ -1335,8 +1335,9 @@ public static class APILegality
                     res = dest.GetLegalFromTemplate(template, set, out s, enc);
                 return new AsyncLegalizationResult(res, s);
             }
-            catch (MissingMethodException)
+            catch (Exception C)
             {
+                Debug.Write("Something Went Wrong: " + C.Message);
                 return new AsyncLegalizationResult(template, LegalizationResult.VersionMismatch);
             }
         }
