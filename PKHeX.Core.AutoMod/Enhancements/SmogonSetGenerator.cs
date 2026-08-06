@@ -32,6 +32,7 @@ public sealed class SmogonSetGenerator
         "STABmons", // Generates illegal movesets
         "National Dex", // Adds Megas to Generation VIII
         "National Dex AG", // Adds Megas to Generation VIII
+        "Inheritance", // Generates illegal movesets/abilities Generation IX
     ];
 
     private static bool IsIllegalFormat(ReadOnlySpan<char> format)
@@ -259,7 +260,7 @@ public sealed class SmogonSetGenerator
         if (string.IsNullOrWhiteSpace(liststring))
             return val;
 
-        string getStat(string v) => liststring.Split(v)[1].Split(',')[0];
+        string getStat(string v) => liststring.Split(v)[1].Split([',', '}'])[0];
         val[0] = getStat("\"hp\":");
         val[1] = getStat("\"atk\":");
         val[2] = getStat("\"def\":");
